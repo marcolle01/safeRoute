@@ -1,42 +1,31 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
 const cors = require("cors");
-require("dotenv").config();
+const authRoutes = require("./routes/authRoutes");
+const reportRoutes = require("./routes/reportRoutes");
+const errorHandler = require("./middleware/errorHandler");
+const morgan = require("morgan");
+
+dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
 app.use(express.json());
+app.use(cors());
+app.use(morgan("dev"));
 
-// Conectar a la base de datos MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("Connected to MongoDB"))
+  .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
-//Middleware de 404
-app.use((req, res) => {
-  res.status(404).send({
-    status: "error",
-    message: "Not found",
-  });
-});
+app.use("/api/auth", authRoutes);
+app.use("/api/reports", reportRoutes);
 
-//Middleware de errores
+app.use(errorHandler);
 
-app.use((error, req, res, next) => {
-  console.error(error);
-  res.status(error.httpStatus || 500).send({
-    status: "error",
-    message: error.message,
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
